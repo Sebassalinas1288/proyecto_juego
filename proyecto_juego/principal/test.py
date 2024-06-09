@@ -29,7 +29,7 @@ font = pygame.font.Font(None, 36)
 # Definición de clases
 
 class Personaje:
-    def __init__(self, nombre, img_personaje, x, y):
+    def __init__(self, nombre, sprites, x, y):
         self.nombre = nombre
         self.vida = 100
         self.ataque = 5
@@ -38,11 +38,16 @@ class Personaje:
         self.inventario = []
         self.rect = pygame.Rect(x, y, 50, 50)
         self.game_over = False
-        self.img_personaje = img_personaje
+        self.sprites = sprites
+        self.current_sprite = 0
+        self.image = self.sprites[self.current_sprite]
+        self.animation_time = 0.1
+        self.current_time = 0
 
     def mover(self, dx, dy):
         self.rect.x += dx
         self.rect.y += dy
+        self.update_animation()
 
     def atacar(self, enemigo):
         enemigo.vida -= self.ataque
@@ -60,7 +65,7 @@ class Personaje:
             self.subir_nivel()
 
     def dibujar(self, screen):
-        screen.blit(self.img_personaje, self.rect.topleft)
+        screen.blit(self.image, self.rect.topleft)
 
     def mostrar_estadisticas(self, screen):
         stats = [
@@ -76,6 +81,13 @@ class Personaje:
     def verificar_vida(self):
         if self.vida <= 0:
             self.game_over = True
+
+    def update_animation(self):
+        self.current_time += self.animation_time
+        if self.current_time >= self.animation_time:
+            self.current_time = 0
+            self.current_sprite = (self.current_sprite + 1) % len(self.sprites)
+            self.image = self.sprites[self.current_sprite]
 
 class Enemigo:
     def __init__(self, tipo, x, y, img_enemigo, velocidad):
@@ -94,7 +106,7 @@ class Enemigo:
                 self.velocidad *= -1
         else:
             self.rect.y += self.velocidad
-            if self.rect.top <= 0 or self.rect.bottom >= SCREEN_HEIGHT:
+            if self.rect.left <= 0 or self.rect.right >= SCREEN_WIDTH:
                 self.velocidad *= -1
 
     def atacar(self, personaje):
@@ -115,7 +127,7 @@ class Objeto:
 
 class Juego:
     def __init__(self):
-        self.img_personaje = self.cargar_imagen("proyecto_juego/imagenes/cuadro_verde.png", (50, 50))
+        self.sprites_personaje = self.cargar_sprites("proyecto_juego/imagenes/sprites", 6, (50, 50))
         self.img_enemigo = self.cargar_imagen("proyecto_juego/imagenes/cuadro_rojo.png", (50, 50))
         self.img_objeto = self.cargar_imagen("proyecto_juego/imagenes/cuadro_azul.png", (30, 30))
         self.img_fondo = self.cargar_imagen("proyecto_juego/imagenes/fondo.jpg", (SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -130,6 +142,14 @@ class Juego:
         imagen = pygame.image.load(os.path.join(ruta)).convert_alpha()
         return pygame.transform.scale(imagen, tamaño)
 
+    def cargar_sprites(self, ruta, num_sprites, tamaño):
+        sprites = []
+        for i in range(num_sprites):
+            imagen = pygame.image.load(os.path.join(ruta, f"{i:02d}.png")).convert_alpha()
+            imagen = pygame.transform.scale(imagen, tamaño)
+            sprites.append(imagen)
+        return sprites
+
     def generar_posicion_aleatoria(self, ancho, alto):
         x = random.randint(0, SCREEN_WIDTH - ancho)
         y = random.randint(0, SCREEN_HEIGHT - alto)
@@ -137,7 +157,7 @@ class Juego:
 
     def generar_personaje(self):
         x, y = self.generar_posicion_aleatoria(50, 50)
-        return Personaje("Héroe", self.img_personaje, x, y)
+        return Personaje("Héroe", self.sprites_personaje, x, y)
 
     def calcular_velocidad_enemigos(self):
         nivel = self.personaje.nivel
