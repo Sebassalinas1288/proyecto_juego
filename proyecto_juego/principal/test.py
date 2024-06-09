@@ -32,8 +32,7 @@ class Personaje:
     def __init__(self, nombre, img_personaje, x, y):
         self.nombre = nombre
         self.vida = 100
-        self.ataque = 10
-        self.defensa = 5
+        self.ataque = 5
         self.nivel = 1
         self.experiencia = 0
         self.inventario = []
@@ -46,16 +45,13 @@ class Personaje:
         self.rect.y += dy
 
     def atacar(self, enemigo):
-        daño = self.ataque - enemigo.defensa
-        if daño > 0:
-            enemigo.vida -= daño
+        enemigo.vida -= self.ataque
 
     def subir_nivel(self):
         self.nivel += 1
-        self.ataque += 5
-        self.defensa += 3
-        if self.vida < 90:
-            self.vida += 5
+        self.vida += 5
+        if self.nivel >= 5:
+            self.ataque += 5
 
     def ganar_experiencia(self, cantidad):
         self.experiencia += cantidad
@@ -70,7 +66,6 @@ class Personaje:
         stats = [
             f"Vida: {self.vida}",
             f"Ataque: {self.ataque}",
-            f"Defensa: {self.defensa}",
             f"Nivel: {self.nivel}",
             f"Experiencia: {self.experiencia}"
         ]
@@ -85,9 +80,8 @@ class Personaje:
 class Enemigo:
     def __init__(self, tipo, x, y, img_enemigo, velocidad):
         self.tipo = tipo
-        self.vida = random.randint(50, 150)
-        self.ataque = random.randint(5, 15)
-        self.defensa = random.randint(3, 8)
+        self.vida = 10
+        self.ataque = 10
         self.rect = pygame.Rect(x, y, 50, 50)
         self.img_enemigo = img_enemigo
         self.direccion = random.choice(['horizontal', 'vertical'])
@@ -104,9 +98,7 @@ class Enemigo:
                 self.velocidad *= -1
 
     def atacar(self, personaje):
-        daño = self.ataque - personaje.defensa
-        if daño > 0:
-            personaje.vida -= daño
+        personaje.vida -= self.ataque
 
     def dibujar(self, screen):
         screen.blit(self.img_enemigo, self.rect.topleft)
@@ -238,4 +230,5 @@ class Juego:
 if __name__ == "__main__":
     juego = Juego()
     juego.run()
+
 
