@@ -54,6 +54,8 @@ class Personaje:
         self.nivel += 1
         self.ataque += 5
         self.defensa += 3
+        if self.vida < 90:
+            self.vida += 5
 
     def ganar_experiencia(self, cantidad):
         self.experiencia += cantidad
@@ -81,13 +83,25 @@ class Personaje:
             self.game_over = True
 
 class Enemigo:
-    def __init__(self, tipo, x, y, img_enemigo):
+    def __init__(self, tipo, x, y, img_enemigo, velocidad):
         self.tipo = tipo
         self.vida = random.randint(50, 150)
         self.ataque = random.randint(5, 15)
         self.defensa = random.randint(3, 8)
         self.rect = pygame.Rect(x, y, 50, 50)
         self.img_enemigo = img_enemigo
+        self.direccion = random.choice(['horizontal', 'vertical'])
+        self.velocidad = velocidad
+
+    def mover(self):
+        if self.direccion == 'horizontal':
+            self.rect.x += self.velocidad
+            if self.rect.left <= 0 or self.rect.right >= SCREEN_WIDTH:
+                self.velocidad *= -1
+        else:
+            self.rect.y += self.velocidad
+            if self.rect.top <= 0 or self.rect.bottom >= SCREEN_HEIGHT:
+                self.velocidad *= -1
 
     def atacar(self, personaje):
         daño = self.ataque - personaje.defensa
@@ -115,7 +129,7 @@ class Juego:
         self.img_fondo = self.cargar_imagen("proyecto_juego/imagenes/fondo.jpg", (SCREEN_WIDTH, SCREEN_HEIGHT))
 
         self.personaje = self.generar_personaje()
-        self.enemigos = self.generar_enemigos(5, self.img_enemigo)
+        self.enemigos = self.generar_enemigos(5, self.img_enemigo, self.calcular_velocidad_enemigos())
         self.objetos = self.generar_objetos(6, self.img_objeto)
 
         self.running = True
@@ -133,11 +147,17 @@ class Juego:
         x, y = self.generar_posicion_aleatoria(50, 50)
         return Personaje("Héroe", self.img_personaje, x, y)
 
-    def generar_enemigos(self, cantidad, img_enemigo):
+    def calcular_velocidad_enemigos(self):
+        nivel = self.personaje.nivel
+        velocidad_base = 3
+        incremento_velocidad = (nivel // 5) * 2
+        return velocidad_base + incremento_velocidad
+
+    def generar_enemigos(self, cantidad, img_enemigo, velocidad):
         enemigos = []
         while len(enemigos) < cantidad:
             x, y = self.generar_posicion_aleatoria(50, 50)
-            nuevo_enemigo = Enemigo("volador", x, y, img_enemigo)
+            nuevo_enemigo = Enemigo("volador", x, y, img_enemigo, velocidad)
             if not any(enemigo.rect.colliderect(nuevo_enemigo.rect) for enemigo in enemigos) and not nuevo_enemigo.rect.colliderect(self.personaje.rect):
                 enemigos.append(nuevo_enemigo)
         return enemigos
@@ -170,6 +190,7 @@ class Juego:
             if not self.personaje.game_over:
                 self.personaje.dibujar(screen)
                 for enemigo in self.enemigos:
+                    enemigo.mover()
                     enemigo.dibujar(screen)
                 for objeto in self.objetos:
                     objeto.dibujar(screen)
@@ -196,7 +217,8 @@ class Juego:
                 if len(self.objetos) == 0:
                     self.personaje.subir_nivel()
                     self.personaje.ganar_experiencia(10)
-                    self.enemigos = self.generar_enemigos(5 + self.personaje.nivel, self.img_enemigo)
+                    nueva_velocidad = self.calcular_velocidad_enemigos()
+                    self.enemigos = self.generar_enemigos(5 + self.personaje.nivel, self.img_enemigo, nueva_velocidad)
                     self.objetos = self.generar_objetos(6, self.img_objeto)
 
                 self.personaje.verificar_vida()
@@ -216,6 +238,4 @@ class Juego:
 if __name__ == "__main__":
     juego = Juego()
     juego.run()
-
-
 
