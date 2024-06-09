@@ -1,6 +1,13 @@
 import pygame
 import random
 import os
+import sys
+
+# Añadir la carpeta principal al sys.path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'sonidos')))
+
+from sonidos import reproducir_sonido_monstruo, reproducir_sonido_dolor, reproducir_sonido_diamante  # Importar funciones del módulo sonidos
 
 # Inicialización de Pygame
 pygame.init()
@@ -105,6 +112,7 @@ class Juego:
         self.img_personaje = self.cargar_imagen("proyecto_juego/imagenes/cuadro_verde.png", (50, 50))
         self.img_enemigo = self.cargar_imagen("proyecto_juego/imagenes/cuadro_rojo.png", (50, 50))
         self.img_objeto = self.cargar_imagen("proyecto_juego/imagenes/cuadro_azul.png", (30, 30))
+        self.img_fondo = self.cargar_imagen("proyecto_juego/imagenes/fondo.jpg", (SCREEN_WIDTH, SCREEN_HEIGHT))
 
         self.personaje = self.generar_personaje()
         self.enemigos = self.generar_enemigos(5, self.img_enemigo)
@@ -156,6 +164,7 @@ class Juego:
                 self.personaje.mover(0, 5)
 
             screen.fill(WHITE)
+            screen.blit(self.img_fondo, (0, 0))  # Dibuja la imagen de fondo
 
             # Dibuja personaje, enemigos y objetos
             if not self.personaje.game_over:
@@ -168,8 +177,10 @@ class Juego:
                 # Detectar colisiones con enemigos
                 for enemigo in self.enemigos:
                     if self.personaje.rect.colliderect(enemigo.rect):
+                        reproducir_sonido_monstruo()
                         self.personaje.atacar(enemigo)
                         enemigo.atacar(self.personaje)
+                        reproducir_sonido_dolor()
                         if enemigo.vida <= 0:
                             self.enemigos.remove(enemigo)
                             self.personaje.ganar_experiencia(20)
@@ -177,6 +188,7 @@ class Juego:
                 # Detectar colisiones con objetos
                 for objeto in self.objetos:
                     if self.personaje.rect.colliderect(objeto.rect):
+                        reproducir_sonido_diamante()
                         self.personaje.inventario.append(objeto)
                         self.objetos.remove(objeto)
 
@@ -204,3 +216,6 @@ class Juego:
 if __name__ == "__main__":
     juego = Juego()
     juego.run()
+
+
+
